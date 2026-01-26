@@ -1,10 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
 const authenticateToken = async (req, res, next) => {
   try {
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      console.error('FATAL ERROR: JWT_SECRET is not defined.');
+      return res.status(500).json({ message: 'Internal server configuration error' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -40,6 +44,14 @@ const authenticateToken = async (req, res, next) => {
 // Optional authentication - doesn't fail if no token, but attaches user if present
 const optionalAuth = async (req, res, next) => {
   try {
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+       // Should we fail or just continue? Failing is safer to alert admin.
+       console.error('FATAL ERROR: JWT_SECRET is not defined.');
+       return next(); // Fail open for optional? No, fail closed for safety usually, but this is optional.
+       // If config is broken, better to not assume identity.
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
