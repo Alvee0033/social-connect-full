@@ -29,7 +29,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
-            username: 'testuser',
+            display_name: 'testuser',
             email: 'test@example.com',
             password: 'password123'
         };
