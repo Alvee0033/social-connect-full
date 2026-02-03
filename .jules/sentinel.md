@@ -1,0 +1,4 @@
+## 2026-02-03 - Critical Auth Bypass in Post Creation
+**Vulnerability:** The `createPost` endpoint was completely unauthenticated and allowed `userId` spoofing via request body. Additionally, the JWT auth middleware was looking for `decoded.userId` but the token generator was signing with `id`, causing auth to fail even if enabled.
+**Learning:** Checking for "Middleware Existence" is not enough; one must verify it is *applied* to routes and *compatible* with the token structure. A mismatch in property names (`id` vs `userId`) can silently break authentication or lead to developers disabling it.
+**Prevention:** Use consistent interfaces for User objects and Tokens. Use TypeScript interfaces to enforce token payload structure. Add integration tests that explicitly check for 401/403 on protected routes.
