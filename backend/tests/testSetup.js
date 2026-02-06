@@ -1,4 +1,10 @@
 require('dotenv').config();
+
+// Set default JWT_SECRET for tests if not present
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'test-secret';
+}
+
 console.log('DB_PASS loaded:', process.env.DB_PASS ? 'Yes' : 'No');
 console.log('DB_HOST:', process.env.DB_HOST);
 const { sequelize, connectDB } = require('../src/config/db');
