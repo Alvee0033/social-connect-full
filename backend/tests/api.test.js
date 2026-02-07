@@ -1,9 +1,14 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { setupTestDB, sequelize } = require('./testSetup');
+const User = require('../src/models/user.model');
 
 beforeAll(async () => {
     await setupTestDB();
+});
+
+beforeEach(async () => {
+    await User.destroy({ where: {}, truncate: true });
 });
 
 afterAll(async () => {
@@ -29,7 +34,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
-            username: 'testuser',
+            display_name: 'Test User',
             email: 'test@example.com',
             password: 'password123'
         };
@@ -39,11 +44,18 @@ describe('API Security and Functionality Tests', () => {
                 .post('/api/auth/register')
                 .send(testUser);
 
+            if (response.status !== 201) console.log(response.body);
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            expect(response.body).toHaveProperty('email', testUser.email);
+            expect(response.body).toHaveProperty('token');
         });
 
         it('should login an existing user', async () => {
+            // First register the user
+            await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
@@ -63,7 +75,7 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            expect(response.status).toBe(401);
         });
     });
 
