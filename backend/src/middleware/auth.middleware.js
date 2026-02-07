@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const getJwtSecret = () => process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -12,9 +12,14 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     
-    const user = await User.findByPk(decoded.userId);
+    // In some implementations payload is { id } or { userId }
+    // auth.service.js uses { id: user.id }
+    // Let's check decoded.id or decoded.userId
+    const userId = decoded.id || decoded.userId;
+
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -22,7 +27,7 @@ const authenticateToken = async (req, res, next) => {
     req.user = {
       id: user.id,
       email: user.email,
-      username: user.username,
+      username: user.display_name, // User model has display_name, not username
     };
     
     next();
@@ -45,13 +50,14 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const decoded = jwt.verify(token, getJwtSecret());
+      const userId = decoded.id || decoded.userId;
+      const user = await User.findByPk(userId);
       if (user) {
         req.user = {
           id: user.id,
           email: user.email,
-          username: user.username,
+          username: user.display_name,
         };
       }
     }
