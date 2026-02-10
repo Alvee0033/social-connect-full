@@ -1,6 +1,7 @@
+// Must import testSetup first to ensure environment variables are loaded
+const { setupTestDB, sequelize } = require('./testSetup');
 const request = require('supertest');
 const app = require('../src/app');
-const { setupTestDB, sequelize } = require('./testSetup');
 
 beforeAll(async () => {
     await setupTestDB();
@@ -31,16 +32,21 @@ describe('API Security and Functionality Tests', () => {
         const testUser = {
             username: 'testuser',
             email: 'test@example.com',
-            password: 'password123'
+            password: 'password123',
+            display_name: 'Test User' // Added display_name as it is required by User model
         };
 
         it('should register a new user', async () => {
             const response = await request(app)
                 .post('/api/auth/register')
-                .send(testUser);
+                .send({
+                    display_name: testUser.display_name,
+                    email: testUser.email,
+                    password: testUser.password
+                });
 
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            expect(response.body).toHaveProperty('token');
         });
 
         it('should login an existing user', async () => {
@@ -63,7 +69,9 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            // The service throws an Error, so it might return 400 or 401 depending on controller
+            // Controller: res.status(401).json({ message: error.message });
+            expect(response.status).toBe(401);
         });
     });
 
