@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  // CRITICAL: Ensure JWT_SECRET is defined to prevent using a weak default.
+  // Sentinel has removed the fallback 'your-super-secret-jwt-key-change-in-production'
+  throw new Error('FATAL: JWT_SECRET is not defined in environment variables.');
+}
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -14,7 +20,7 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    const user = await User.findByPk(decoded.userId || decoded.id); // Handle potential payload differences
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -46,7 +52,7 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const user = await User.findByPk(decoded.userId || decoded.id);
       if (user) {
         req.user = {
           id: user.id,
