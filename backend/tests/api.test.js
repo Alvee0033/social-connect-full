@@ -1,6 +1,7 @@
+const { setupTestDB, sequelize } = require('./testSetup');
 const request = require('supertest');
 const app = require('../src/app');
-const { setupTestDB, sequelize } = require('./testSetup');
+const User = require('../src/models/user.model');
 
 beforeAll(async () => {
     await setupTestDB();
@@ -11,6 +12,11 @@ afterAll(async () => {
 });
 
 describe('API Security and Functionality Tests', () => {
+
+    // Clean up users before running auth tests
+    beforeEach(async () => {
+        await User.destroy({ where: {} });
+    });
 
     describe('Security Headers', () => {
         it('should have Helmet security headers', async () => {
@@ -29,7 +35,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
-            username: 'testuser',
+            display_name: 'testuser', // Fixed from username
             email: 'test@example.com',
             password: 'password123'
         };
@@ -40,10 +46,17 @@ describe('API Security and Functionality Tests', () => {
                 .send(testUser);
 
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            // expect(response.body).toHaveProperty('message', 'User created successfully'); // Code returns user obj
+            expect(response.body).toHaveProperty('token');
+            expect(response.body.email).toBe(testUser.email);
         });
 
         it('should login an existing user', async () => {
+            // Register first
+            await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
@@ -56,6 +69,11 @@ describe('API Security and Functionality Tests', () => {
         });
 
         it('should fail to login with wrong credentials', async () => {
+            // Register first
+            await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
@@ -63,7 +81,7 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            expect(response.status).toBe(401); // Fixed from 404
         });
     });
 

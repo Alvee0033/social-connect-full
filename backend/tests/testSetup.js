@@ -1,6 +1,12 @@
 require('dotenv').config();
 console.log('DB_PASS loaded:', process.env.DB_PASS ? 'Yes' : 'No');
 console.log('DB_HOST:', process.env.DB_HOST);
+
+// Ensure JWT_SECRET is set for tests
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'test-secret-key-12345';
+}
+
 const { sequelize, connectDB } = require('../src/config/db');
 
 const setupTestDB = async () => {
