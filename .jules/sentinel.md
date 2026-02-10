@@ -1,0 +1,4 @@
+## 2024-05-22 - [Broken Auth Middleware & Hardcoded Secret]
+**Vulnerability:** `auth.middleware.js` contained a hardcoded fallback for `JWT_SECRET`, allowing potential token forgery if the environment variable was missing. Additionally, a logic error (`decoded.userId` vs `decoded.id`) caused valid tokens to be rejected, meaning the authentication layer was effectively broken and likely unused.
+**Learning:** The presence of critical logic errors in security code (that prevent it from working at all) suggests a lack of integration testing for protected routes. Security code that isn't running or tested provides no protection.
+**Prevention:** Always implement integration tests that specifically target protected endpoints to verify that authentication middleware functions as expected. Never provide default values for critical secrets; fail startup if they are missing.
