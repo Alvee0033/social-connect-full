@@ -1,6 +1,6 @@
+const { setupTestDB, sequelize } = require('./testSetup');
 const request = require('supertest');
 const app = require('../src/app');
-const { setupTestDB, sequelize } = require('./testSetup');
 
 beforeAll(async () => {
     await setupTestDB();
@@ -29,6 +29,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
+            display_name: 'Test User',
             username: 'testuser',
             email: 'test@example.com',
             password: 'password123'
@@ -39,8 +40,12 @@ describe('API Security and Functionality Tests', () => {
                 .post('/api/auth/register')
                 .send(testUser);
 
+            if (response.status !== 201) {
+                console.error('Register failed:', response.body);
+            }
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            expect(response.body).toHaveProperty('token');
+            expect(response.body).toHaveProperty('email', testUser.email);
         });
 
         it('should login an existing user', async () => {
@@ -63,7 +68,7 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            expect(response.status).toBe(401);
         });
     });
 
