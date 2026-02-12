@@ -1,6 +1,6 @@
+const { setupTestDB, sequelize } = require('./testSetup');
 const request = require('supertest');
 const app = require('../src/app');
-const { setupTestDB, sequelize } = require('./testSetup');
 
 beforeAll(async () => {
     await setupTestDB();
@@ -29,26 +29,42 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
+            display_name: 'Test User', // Using display_name as per User model, though controller might expect username?
+            // Wait, User model has display_name. Controller register logic uses display_name.
+            // But api.test.js uses username.
             username: 'testuser',
             email: 'test@example.com',
             password: 'password123'
         };
+        // Let's verify what the controller expects.
+        // auth.service.js: const { display_name, email, password } = userData;
+        // So the existing test might fail if it sends username instead of display_name.
+        // Let's fix the test payload while we are here.
+        const registerPayload = {
+            display_name: 'Test User',
+            email: 'test@example.com',
+            password: 'password123'
+        };
+
 
         it('should register a new user', async () => {
             const response = await request(app)
                 .post('/api/auth/register')
-                .send(testUser);
+                .send(registerPayload);
 
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            // expect(response.body).toHaveProperty('message', 'User created successfully');
+            // auth.controller.js returns JSON user object, not message.
+            expect(response.body).toHaveProperty('token');
+            expect(response.body).toHaveProperty('id');
         });
 
         it('should login an existing user', async () => {
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
-                    email: testUser.email,
-                    password: testUser.password
+                    email: registerPayload.email,
+                    password: registerPayload.password
                 });
 
             expect(response.status).toBe(200);
@@ -59,11 +75,14 @@ describe('API Security and Functionality Tests', () => {
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
-                    email: testUser.email,
+                    email: registerPayload.email,
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            // The controller sends 401 for invalid credentials (auth.controller.js line 17)
+            // wait, check controller again.
+            // catch(error) -> res.status(401).json
+            expect(response.status).toBe(401);
         });
     });
 
