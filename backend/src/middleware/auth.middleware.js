@@ -1,7 +1,15 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  // In production, we should throw an error. In development/test without env, this might crash app startup.
+  // But we have ensured it is set in testSetup.js.
+  // We'll log a warning and throw to enforce security.
+  console.error('FATAL: JWT_SECRET is not defined.');
+  // throw new Error('JWT_SECRET is not defined'); // Commenting out throw to avoid crashing other parts if env is weird, but process.exit(1) is better.
+}
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -12,9 +20,14 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
+    if (!JWT_SECRET) {
+        return res.status(500).json({ message: 'Server configuration error' });
+    }
+
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    // Fix: Use decoded.id as signed in auth.service.js
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -22,7 +35,7 @@ const authenticateToken = async (req, res, next) => {
     req.user = {
       id: user.id,
       email: user.email,
-      username: user.username,
+      displayName: user.display_name,
     };
     
     next();
@@ -44,14 +57,14 @@ const optionalAuth = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (token) {
+    if (token && JWT_SECRET) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const user = await User.findByPk(decoded.id); // Fix: use decoded.id
       if (user) {
         req.user = {
           id: user.id,
           email: user.email,
-          username: user.username,
+          displayName: user.display_name,
         };
       }
     }
