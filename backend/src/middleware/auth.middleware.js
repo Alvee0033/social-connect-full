@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
 const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -12,9 +10,14 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Read secret from env at runtime to ensure we get the value set by test setup
+    const secret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+    const decoded = jwt.verify(token, secret);
+
+    // Support both 'id' (from auth service) and 'userId' (if used elsewhere)
+    const userId = decoded.id || decoded.userId;
     
-    const user = await User.findByPk(decoded.userId);
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -23,6 +26,7 @@ const authenticateToken = async (req, res, next) => {
       id: user.id,
       email: user.email,
       username: user.username,
+      displayName: user.display_name
     };
     
     next();
@@ -45,13 +49,17 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const secret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+      const decoded = jwt.verify(token, secret);
+      const userId = decoded.id || decoded.userId;
+
+      const user = await User.findByPk(userId);
       if (user) {
         req.user = {
           id: user.id,
           email: user.email,
           username: user.username,
+          displayName: user.display_name
         };
       }
     }
