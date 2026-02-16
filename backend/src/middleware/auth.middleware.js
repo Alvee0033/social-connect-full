@@ -14,7 +14,10 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    // Check for both decoded.id (standard) or decoded.userId (if different)
+    const userId = decoded.id || decoded.userId;
+
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -46,7 +49,8 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const userId = decoded.id || decoded.userId;
+      const user = await User.findByPk(userId);
       if (user) {
         req.user = {
           id: user.id,
