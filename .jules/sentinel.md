@@ -1,0 +1,4 @@
+## 2024-05-23 - Inconsistent Token Payload & IDOR
+**Vulnerability:** Found IDOR in `createPost` where `userId` from body was trusted. Also, `authenticateToken` middleware was broken because it expected `userId` in JWT payload, but service signed `id`. This led to middleware likely failing or being bypassed (if optional).
+**Learning:** Inconsistent variable naming between Service (signing token) and Middleware (verifying token) can silently break authentication. Always verify the JWT payload structure matches the verification logic.
+**Prevention:** Use a shared constant or type definition for the JWT payload structure. Implement integration tests that specifically check the "happy path" of authentication flow (login -> use token -> access protected resource) to catch these mismatches early.
