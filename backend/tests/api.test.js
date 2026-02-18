@@ -1,4 +1,6 @@
 const request = require('supertest');
+// Set JWT_SECRET before loading app to ensure consistency
+process.env.JWT_SECRET = 'test_secret';
 const app = require('../src/app');
 const { setupTestDB, sequelize } = require('./testSetup');
 
@@ -29,7 +31,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
-            username: 'testuser',
+            display_name: 'testuser',
             email: 'test@example.com',
             password: 'password123'
         };
@@ -40,7 +42,10 @@ describe('API Security and Functionality Tests', () => {
                 .send(testUser);
 
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            // The actual response body from register is the user object, not just a message
+            // Based on auth.controller.js: res.status(201).json(user);
+            expect(response.body).toHaveProperty('token');
+            expect(response.body).toHaveProperty('displayName', testUser.display_name);
         });
 
         it('should login an existing user', async () => {
@@ -63,7 +68,7 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            expect(response.status).toBe(401);
         });
     });
 
