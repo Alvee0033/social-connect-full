@@ -3,11 +3,14 @@ const User = require('../models/user.model');
 
 exports.createPost = async (req, res) => {
     try {
-        const { content, imageUrl, userId } = req.body;
+        const { content, imageUrl } = req.body;
         
-        if (!content || !userId) {
-            return res.status(400).json({ message: 'Content and userId are required' });
+        if (!content) {
+            return res.status(400).json({ message: 'Content is required' });
         }
+
+        // Use the authenticated user's ID to prevent IDOR
+        const userId = req.user.id;
         
         const post = await Post.create({ content, imageUrl, userId });
         
