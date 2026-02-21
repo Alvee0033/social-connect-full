@@ -1,4 +1,5 @@
 const request = require('supertest');
+process.env.JWT_SECRET = 'test-secret'; // Ensure JWT_SECRET is set
 const app = require('../src/app');
 const { setupTestDB, sequelize } = require('./testSetup');
 
@@ -29,7 +30,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
-            username: 'testuser',
+            display_name: 'testuser', // Updated to match API expectation (display_name, not username)
             email: 'test@example.com',
             password: 'password123'
         };
@@ -40,7 +41,7 @@ describe('API Security and Functionality Tests', () => {
                 .send(testUser);
 
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            expect(response.body).toHaveProperty('token');
         });
 
         it('should login an existing user', async () => {
@@ -63,7 +64,7 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            expect(response.status).toBe(401);
         });
     });
 
