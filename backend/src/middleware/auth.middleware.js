@@ -14,7 +14,8 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    // JWT payload has 'id', not 'userId' (see auth.service.js)
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -22,7 +23,7 @@ const authenticateToken = async (req, res, next) => {
     req.user = {
       id: user.id,
       email: user.email,
-      username: user.username,
+      displayName: user.display_name,
     };
     
     next();
@@ -46,12 +47,12 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const user = await User.findByPk(decoded.id);
       if (user) {
         req.user = {
           id: user.id,
           email: user.email,
-          username: user.username,
+          displayName: user.display_name,
         };
       }
     }

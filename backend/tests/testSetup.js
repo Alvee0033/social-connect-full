@@ -1,3 +1,5 @@
+process.env.JWT_SECRET = 'test_secret'; // Ensure secret is available before app requires routes/middleware
+
 require('dotenv').config();
 console.log('DB_PASS loaded:', process.env.DB_PASS ? 'Yes' : 'No');
 console.log('DB_HOST:', process.env.DB_HOST);
