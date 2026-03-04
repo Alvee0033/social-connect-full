@@ -3,7 +3,11 @@ const User = require('../models/user.model');
 
 exports.createPost = async (req, res) => {
     try {
-        const { content, imageUrl, userId } = req.body;
+        // SECURITY: Extract content and imageUrl from body, but use req.user.id for userId
+        // to prevent Insecure Direct Object Reference (IDOR) attacks where a user could
+        // create posts on behalf of another user.
+        const { content, imageUrl } = req.body;
+        const userId = req.user.id;
         
         if (!content || !userId) {
             return res.status(400).json({ message: 'Content and userId are required' });
