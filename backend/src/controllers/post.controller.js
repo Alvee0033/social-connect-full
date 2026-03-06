@@ -3,10 +3,13 @@ const User = require('../models/user.model');
 
 exports.createPost = async (req, res) => {
     try {
-        const { content, imageUrl, userId } = req.body;
+        const { content, imageUrl } = req.body;
+        // 🛡️ SECURITY: Prevent IDOR by taking userId from authenticated token
+        // instead of allowing arbitrary userId in the request body
+        const userId = req.user.id;
         
-        if (!content || !userId) {
-            return res.status(400).json({ message: 'Content and userId are required' });
+        if (!content) {
+            return res.status(400).json({ message: 'Content is required' });
         }
         
         const post = await Post.create({ content, imageUrl, userId });
@@ -18,6 +21,7 @@ exports.createPost = async (req, res) => {
         
         res.status(201).json(postWithUser);
     } catch (error) {
+        // 🛡️ SECURITY: Consider not exposing raw error message in production
         res.status(500).json({ message: error.message });
     }
 };
@@ -55,4 +59,3 @@ exports.reactToPost = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
