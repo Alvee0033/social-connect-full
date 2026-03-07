@@ -1,10 +1,16 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateToken = async (req, res, next) => {
   try {
+    // SECURITY: Ensure JWT_SECRET is configured to prevent authentication bypass
+    if (!JWT_SECRET) {
+      console.error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not set.');
+      return res.status(500).json({ message: 'Internal server error: Authentication misconfigured' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -41,6 +47,12 @@ const authenticateToken = async (req, res, next) => {
 // Optional authentication - doesn't fail if no token, but attaches user if present
 const optionalAuth = async (req, res, next) => {
   try {
+    // SECURITY: Ensure JWT_SECRET is configured
+    if (!JWT_SECRET) {
+      console.error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not set.');
+      return res.status(500).json({ message: 'Internal server error: Authentication misconfigured' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
