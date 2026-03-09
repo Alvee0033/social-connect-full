@@ -1,0 +1,4 @@
+## 2024-05-24 - [IDOR in Post Creation via Request Body]
+**Vulnerability:** The `createPost` endpoint in `post.controller.js` was blindly trusting the `userId` provided in the request body instead of relying on the authenticated user's ID (`req.user.id`). This allowed users to easily spoof the `userId` and create posts on behalf of another user.
+**Learning:** Never trust the client to provide critical identifiers (like their own ID) if that information can be reliably obtained from an authoritative source on the server, such as an authenticated session or verified JWT token. Trusting client data without verification is a common cause of Insecure Direct Object Reference (IDOR) vulnerabilities.
+**Prevention:** For any action that assumes the user's identity, always enforce the action against `req.user.id` populated by the authentication middleware, and ignore or reject user-supplied identifiers intended to bypass identity.
