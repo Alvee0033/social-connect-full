@@ -1,0 +1,4 @@
+## 2024-05-20 - [IDOR in Post Creation]
+**Vulnerability:** In `post.controller.js`, the `userId` associated with a new post was being retrieved directly from the user-controlled `req.body.userId`. This allowed an authenticated user to create a post appearing to be from any other user by simply altering the `userId` in the payload (Insecure Direct Object Reference).
+**Learning:** Never trust the client to assert their own identity or authority for resource creation when authentication state is available. When creating resources tied to a user, the user ID must be derived securely from the established session or token, not from user input.
+**Prevention:** Always use the authenticated user's ID (`req.user.id` or similar) populated by auth middleware, rather than accepting user IDs from request parameters (`req.body`, `req.query`, `req.params`) for actions the user is taking on their own behalf.
