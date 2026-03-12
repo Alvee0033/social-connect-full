@@ -10,6 +10,10 @@ const generateToken = (id) => {
 exports.register = async (userData) => {
     const { display_name, email, password } = userData;
 
+    if (!display_name || !email || !password) {
+        throw new Error('Please provide display_name, email, and password');
+    }
+
     const userExists = await User.findOne({ where: { email } });
     if (userExists) {
         throw new Error('User already exists');
