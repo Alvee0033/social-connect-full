@@ -1,0 +1,4 @@
+## 2024-05-21 - [Missing Authentication & IDOR on Post Creation]
+**Vulnerability:** The `/api/posts` routes (specifically `POST /` and `POST /:id/react`) were missing authentication. Furthermore, the `createPost` controller accepted `userId` from the request body (`req.body.userId`) instead of deriving it from an authenticated session. This allowed any user (or unauthenticated person) to create posts acting as any other user (IDOR).
+**Learning:** Controller methods should never trust the client to provide the `userId` for resource creation when the resource belongs to the current user. Unprotected endpoints can easily lead to privilege escalation or impersonation.
+**Prevention:** Always apply the `authenticateToken` middleware to routes that modify data on behalf of a user. Inside the controllers, strictly use `req.user.id` (populated by the auth middleware) instead of accepting it via `req.body` or `req.query`.
