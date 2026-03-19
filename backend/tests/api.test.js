@@ -1,6 +1,8 @@
 const request = require('supertest');
-const app = require('../src/app');
 const { setupTestDB, sequelize } = require('./testSetup');
+
+// Important: app must be imported AFTER testSetup to use the mocked DB and JWT secret
+const app = require('../src/app');
 
 beforeAll(async () => {
     await setupTestDB();
@@ -29,7 +31,7 @@ describe('API Security and Functionality Tests', () => {
 
     describe('Auth Endpoints', () => {
         const testUser = {
-            username: 'testuser',
+            display_name: 'testuser',
             email: 'test@example.com',
             password: 'password123'
         };
@@ -40,7 +42,8 @@ describe('API Security and Functionality Tests', () => {
                 .send(testUser);
 
             expect(response.status).toBe(201);
-            expect(response.body).toHaveProperty('message', 'User created successfully');
+            expect(response.body).toHaveProperty('token');
+            expect(response.body).toHaveProperty('id');
         });
 
         it('should login an existing user', async () => {
@@ -63,7 +66,7 @@ describe('API Security and Functionality Tests', () => {
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(404); // Based on controller logic it seems
+            expect(response.status).toBe(401); // Auth controller returns 401 on login failure
         });
     });
 
