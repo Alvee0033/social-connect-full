@@ -9,8 +9,8 @@ exports.searchUsers = async (req, res) => {
         const users = await User.findAll({
             where: {
                 [Op.or]: [
-                    { display_name: { [Op.iLike]: `%${query}%` } },
-                    { email: { [Op.iLike]: `%${query}%` } }
+                    { display_name: { [Op.like]: `%${query}%` } },
+                    { email: { [Op.like]: `%${query}%` } }
                 ]
             },
             attributes: ['id', ['display_name', 'displayName'], 'email'],
@@ -18,6 +18,7 @@ exports.searchUsers = async (req, res) => {
         });
         res.json(users);
     } catch (error) {
+        console.error('Search users error:', error);
         res.status(500).json({ message: error.message });
     }
 };

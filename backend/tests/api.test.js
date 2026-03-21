@@ -83,4 +83,37 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('User Endpoints', () => {
+        const testUser = {
+            display_name: 'searchuser',
+            email: 'search@example.com',
+            password: 'password123'
+        };
+        let authToken;
+
+        beforeAll(async () => {
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+            authToken = response.body.token;
+        });
+
+        it('should require authentication for searching users', async () => {
+            const response = await request(app).get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+            expect(response.body).toHaveProperty('message', 'Access token required');
+        });
+
+        it('should allow authenticated users to search users', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=searchuser')
+                .set('Authorization', `Bearer ${authToken}`);
+
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+            expect(response.body.length).toBeGreaterThan(0);
+            expect(response.body[0]).toHaveProperty('displayName', 'searchuser');
+        });
+    });
 });
