@@ -83,4 +83,36 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('User Search Endpoint', () => {
+        let userToken;
+
+        beforeAll(async () => {
+            // Register a user to search for and to get a token
+            const res = await request(app)
+                .post('/api/auth/register')
+                .send({
+                    display_name: 'searchTarget',
+                    email: 'search@example.com',
+                    password: 'password123'
+                });
+            userToken = res.body.token;
+        });
+
+        it('should require authentication for search', async () => {
+            const response = await request(app).get('/api/users/search?query=target');
+            expect(response.status).toBe(401);
+        });
+
+        it('should not disclose user emails in search results', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=searchTarget')
+                .set('Authorization', `Bearer ${userToken}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.length).toBeGreaterThan(0);
+            expect(response.body[0]).toHaveProperty('displayName', 'searchTarget');
+            expect(response.body[0]).not.toHaveProperty('email');
+        });
+    });
 });

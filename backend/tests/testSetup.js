@@ -11,6 +11,10 @@ jest.mock('../src/config/db', () => {
     const sequelize = new Sequelize('sqlite::memory:', {
         logging: false,
     });
+
+    // Mock iLike since SQLite doesn't support it, but production Postgres does
+    Sequelize.Op.iLike = Sequelize.Op.like;
+
     return {
         sequelize,
         connectDB: async () => {},
