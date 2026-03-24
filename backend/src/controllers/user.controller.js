@@ -8,12 +8,11 @@ exports.searchUsers = async (req, res) => {
 
         const users = await User.findAll({
             where: {
-                [Op.or]: [
-                    { display_name: { [Op.iLike]: `%${query}%` } },
-                    { email: { [Op.iLike]: `%${query}%` } }
-                ]
+                // Security: Do not allow searching by email to prevent enumeration
+                display_name: { [Op.iLike]: `%${query}%` }
             },
-            attributes: ['id', ['display_name', 'displayName'], 'email'],
+            // Security: Remove 'email' from attributes to prevent information disclosure
+            attributes: ['id', ['display_name', 'displayName']],
             limit: 10
         });
         res.json(users);
