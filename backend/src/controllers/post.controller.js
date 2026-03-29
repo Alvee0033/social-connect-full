@@ -25,8 +25,16 @@ exports.createPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
     try {
+        const { page = 1, limit = 50 } = req.query;
+        // Cap the limit to a maximum of 100 and a minimum of 1 to prevent DoS via extremely large limits or invalid inputs
+        const parsedLimit = Math.max(1, Math.min(parseInt(limit, 10) || 50, 100));
+        const parsedPage = Math.max(parseInt(page, 10) || 1, 1);
+        const offset = (parsedPage - 1) * parsedLimit;
+
         const posts = await Post.findAll({
             order: [['createdAt', 'DESC']],
+            limit: parsedLimit,
+            offset: offset,
             include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
         });
         res.json(posts);
