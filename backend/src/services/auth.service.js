@@ -1,6 +1,11 @@
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 
+// 🛡️ SECURITY: Prevent generation of tokens without a secret
+if (!process.env.JWT_SECRET) {
+    throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is not defined. Failing securely.');
+}
+
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d',
