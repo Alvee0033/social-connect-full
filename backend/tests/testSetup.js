@@ -3,11 +3,29 @@ require('dotenv').config();
 // Must set JWT_SECRET before app/middleware initialization
 process.env.JWT_SECRET = 'test-secret';
 
-const Sequelize = require('sequelize');
+// Mock sequelize to replace Op.iLike with Op.like globally
+jest.mock('sequelize', () => {
+    const originalModule = jest.requireActual('sequelize');
+    const { Op } = originalModule;
+
+    const OpProxy = new Proxy(Op, {
+        get(target, prop) {
+            if (prop === 'iLike') {
+                return target.like; // SQLite doesn't support iLike, use like instead
+            }
+            return target[prop];
+        }
+    });
+
+    return {
+        ...originalModule,
+        Op: OpProxy
+    };
+});
 
 // Override the DB configuration for testing
 jest.mock('../src/config/db', () => {
-    const Sequelize = require('sequelize');
+    const { Sequelize } = jest.requireActual('sequelize');
     const sequelize = new Sequelize('sqlite::memory:', {
         logging: false,
     });
