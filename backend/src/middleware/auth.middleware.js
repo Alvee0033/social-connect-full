@@ -1,10 +1,16 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateToken = async (req, res, next) => {
   try {
+    // Security enhancement: Ensure JWT_SECRET is configured
+    if (!JWT_SECRET) {
+      console.error('CRITICAL: JWT_SECRET environment variable is not set.');
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -14,7 +20,8 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    // Security fix: Extract ID from 'id' property since token was signed with { id }
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -44,9 +51,10 @@ const optionalAuth = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (token) {
+    if (token && JWT_SECRET) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      // Security fix: Extract ID from 'id' property since token was signed with { id }
+      const user = await User.findByPk(decoded.id);
       if (user) {
         req.user = {
           id: user.id,
