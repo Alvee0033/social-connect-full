@@ -146,7 +146,12 @@ const setupSocketHandlers = (io) => {
                 
                 await Message.update(
                     { isRead: true, readAt: new Date() },
-                    { where: { id: { [Op.in]: messageIds } } }
+                    {
+                        where: {
+                            id: { [Op.in]: messageIds },
+                            receiverId: userId // Security fix: Ensure user is the intended receiver
+                        }
+                    }
                 );
 
                 // Notify sender that messages were read
