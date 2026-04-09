@@ -1,6 +1,8 @@
 const User = require('../models/user.model');
 const { Op } = require('sequelize');
 
+// SECURITY: This endpoint is protected by authenticateToken middleware in routes
+// to prevent unauthenticated users from scraping PII (emails and display names).
 exports.searchUsers = async (req, res) => {
     try {
         const { query } = req.query;
