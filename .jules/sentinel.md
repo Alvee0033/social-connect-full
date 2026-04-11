@@ -2,3 +2,7 @@
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
 **Prevention:** Always verify that routes defining state-changing endpoints (POST, PUT, DELETE) have authentication middleware applied. Within controllers, always rely on `req.user.id` (set by the authentication middleware) to determine the user performing the action, rather than relying on the client to send a `userId`.
+## 2025-02-14 - [Unbounded Database Query in API]
+**Vulnerability:** The `/api/posts` endpoint retrieved all posts using `Post.findAll()` without pagination.
+**Learning:** Returning unbounded lists can lead to DoS by exhausting database and application memory if a large number of records exists.
+**Prevention:** Always implement pagination on API endpoints that list resources, setting an appropriate default limit.
