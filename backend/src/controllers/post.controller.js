@@ -25,8 +25,25 @@ exports.createPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
     try {
+        let { page = 1, limit = 50 } = req.query;
+
+        // Parse correctly to integer
+        page = parseInt(page, 10);
+        limit = parseInt(limit, 10);
+
+        // Input validation and sanitization
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 50;
+
+        // Security Cap: Do not allow more than 100 items per request
+        limit = Math.min(limit, 100);
+
+        const offset = (page - 1) * limit;
+
         const posts = await Post.findAll({
             order: [['createdAt', 'DESC']],
+            limit,
+            offset,
             include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
         });
         res.json(posts);
