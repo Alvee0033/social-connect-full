@@ -70,6 +70,16 @@ describe('API Security and Functionality Tests', () => {
         });
     });
 
+    describe('User Search Endpoints', () => {
+        it('should fail to search users if unauthenticated', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=test');
+
+            expect(response.status).toBe(401);
+            expect(response.body).toHaveProperty('message', 'Access token required');
+        });
+    });
+
     describe('Rate Limiting', () => {
         it('should eventually return 429 after many requests', async () => {
             // We set limit to 100 in app.js
