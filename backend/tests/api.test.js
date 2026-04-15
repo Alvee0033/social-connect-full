@@ -83,4 +83,12 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('User Search Endpoints', () => {
+        it('should require authentication to search users', async () => {
+            const response = await request(app).get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+            expect(response.body).toHaveProperty('message', 'Access token required');
+        });
+    });
 });
