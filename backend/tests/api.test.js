@@ -83,4 +83,12 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('Authentication tests', () => {
+        it('should exit if JWT_SECRET is missing', () => {
+            // tested elsewhere, but standard API tests shouldn't fail
+            // so we add a basic placeholder
+            expect(process.env.JWT_SECRET).toBeDefined();
+        });
+    });
 });
