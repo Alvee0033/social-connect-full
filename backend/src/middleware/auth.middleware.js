@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+// Security Fix: Do not use hardcoded JWT secrets
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+  throw new Error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+}
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -14,7 +20,8 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    // Security Fix: Use correct payload key 'id' instead of 'userId' to prevent auth bypass
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -46,7 +53,7 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const user = await User.findByPk(decoded.id);
       if (user) {
         req.user = {
           id: user.id,
