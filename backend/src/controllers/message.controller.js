@@ -1,6 +1,7 @@
 const Message = require('../models/message.model');
 const Conversation = require('../models/conversation.model');
 const User = require('../models/user.model');
+const Friendship = require('../models/friendship.model');
 const { Op } = require('sequelize');
 
 // Send a message
@@ -11,6 +12,21 @@ exports.sendMessage = async (req, res) => {
 
         if (!receiverId || !content) {
             return res.status(400).json({ message: 'Receiver ID and content are required' });
+        }
+
+        // Security fix: verify friendship status before allowing message
+        const friendship = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { requesterId: senderId, addresseeId: receiverId },
+                    { requesterId: receiverId, addresseeId: senderId },
+                ],
+                status: 'accepted',
+            },
+        });
+
+        if (!friendship) {
+            return res.status(403).json({ message: 'Can only message friends' });
         }
 
         // Create message
@@ -193,6 +209,21 @@ exports.getOrCreateConversation = async (req, res) => {
         const otherUser = await User.findByPk(otherUserId);
         if (!otherUser) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Security fix: verify friendship status before allowing conversation creation
+        const friendship = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { requesterId: userId, addresseeId: otherUserId },
+                    { requesterId: otherUserId, addresseeId: userId },
+                ],
+                status: 'accepted',
+            },
+        });
+
+        if (!friendship) {
+            return res.status(403).json({ message: 'Can only converse with friends' });
         }
 
         // Find or create conversation
