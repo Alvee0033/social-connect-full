@@ -83,4 +83,27 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('Post Endpoints Security', () => {
+        it('should limit the number of posts returned to prevent DoS', async () => {
+            // Pre-populate posts
+            const User = require('../src/models/user.model');
+            const Post = require('../src/models/post.model');
+            const testUser = await User.create({ display_name: 'testuser', email: 'limit@example.com', password: 'password123' });
+
+            for(let i=0; i<60; i++) {
+                await Post.create({ content: `Test post ${i}`, userId: testUser.id });
+            }
+
+            // Test default limit
+            const resDefault = await request(app).get('/api/posts');
+            expect(resDefault.status).toBe(200);
+            expect(resDefault.body.length).toBeLessThanOrEqual(20);
+
+            // Test explicit limit capped at 50
+            const resMax = await request(app).get('/api/posts?limit=100');
+            expect(resMax.status).toBe(200);
+            expect(resMax.body.length).toBeLessThanOrEqual(50);
+        });
+    });
 });
