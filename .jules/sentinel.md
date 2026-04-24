@@ -2,3 +2,7 @@
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
 **Prevention:** Always verify that routes defining state-changing endpoints (POST, PUT, DELETE) have authentication middleware applied. Within controllers, always rely on `req.user.id` (set by the authentication middleware) to determine the user performing the action, rather than relying on the client to send a `userId`.
+## 2024-05-24 - [Unbounded Query in Post Retrieval causing DoS Risk]
+**Vulnerability:** The `GET /api/posts` endpoint retrieved all posts from the database using `Post.findAll()` without `limit` or `offset`. If there were thousands or millions of posts, this query could exhaust database memory or crash the Node process (Denial of Service).
+**Learning:** Database retrieval functions should never be unconstrained, particularly on public or frequently accessed API endpoints.
+**Prevention:** Always implement pagination (`limit` and `offset`) for `GET` endpoints returning collections, and enforce a maximum `limit` (e.g., 50) to prevent malicious clients from requesting arbitrarily large pages.
