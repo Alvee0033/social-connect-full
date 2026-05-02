@@ -144,9 +144,16 @@ const setupSocketHandlers = (io) => {
             try {
                 const { messageIds, senderId } = data;
                 
+                // Security check: Only update messages where the current user is the receiver
+                // This prevents IDOR (Insecure Direct Object Reference)
                 await Message.update(
                     { isRead: true, readAt: new Date() },
-                    { where: { id: { [Op.in]: messageIds } } }
+                    {
+                        where: {
+                            id: { [Op.in]: messageIds },
+                            receiverId: userId // Ensure current user is the receiver
+                        }
+                    }
                 );
 
                 // Notify sender that messages were read
