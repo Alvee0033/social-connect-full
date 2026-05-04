@@ -1,7 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+// SECURE: Removed hardcoded fallback for JWT_SECRET to prevent token forging
+// in case of missing environment variables.
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('CRITICAL: JWT_SECRET environment variable is not set');
+  }
+  return process.env.JWT_SECRET;
+};
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -12,7 +19,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     
     const user = await User.findByPk(decoded.userId);
     if (!user) {
@@ -45,7 +52,7 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret());
       const user = await User.findByPk(decoded.userId);
       if (user) {
         req.user = {
