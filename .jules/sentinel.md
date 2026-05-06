@@ -2,3 +2,7 @@
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
 **Prevention:** Always verify that routes defining state-changing endpoints (POST, PUT, DELETE) have authentication middleware applied. Within controllers, always rely on `req.user.id` (set by the authentication middleware) to determine the user performing the action, rather than relying on the client to send a `userId`.
+## 2024-05-24 - [Hardcoded JWT Secret Vulnerability]
+**Vulnerability:** The authentication middleware used a hardcoded fallback secret (`'your-super-secret-jwt-key-change-in-production'`) if the `JWT_SECRET` environment variable was not set.
+**Learning:** Hardcoded default secrets are dangerous, especially if an application runs in production where environment variables are misconfigured. It allows an attacker to easily forge valid JWT tokens, bypassing authentication entirely.
+**Prevention:** Never provide fallback defaults for cryptographic secrets. The application should fail securely (e.g., throwing a fatal error on startup) if essential security configuration is missing.
