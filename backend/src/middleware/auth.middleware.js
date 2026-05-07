@@ -1,9 +1,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
 const authenticateToken = async (req, res, next) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+    return res.status(500).json({ message: 'Internal server configuration error' });
+  }
+
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -13,8 +17,9 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.userId || decoded.id;
     
-    const user = await User.findByPk(decoded.userId);
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -40,13 +45,20 @@ const authenticateToken = async (req, res, next) => {
 
 // Optional authentication - doesn't fail if no token, but attaches user if present
 const optionalAuth = async (req, res, next) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+    return next(); // Fail open, but it's optional auth, so continue without attaching user
+  }
+
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const userId = decoded.userId || decoded.id;
+      const user = await User.findByPk(userId);
       if (user) {
         req.user = {
           id: user.id,
