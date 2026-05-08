@@ -83,4 +83,34 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('User Endpoints', () => {
+        let userToken;
+
+        beforeAll(async () => {
+            // Register a user to get a token
+            const testUser = {
+                display_name: 'searchtest',
+                email: 'searchtest@example.com',
+                password: 'password123'
+            };
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+            userToken = response.body.token;
+        });
+
+        it('should return 401 when searching users without auth token', async () => {
+            const response = await request(app).get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+        });
+
+        it('should return 200 when searching users with auth token', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=test')
+                .set('Authorization', `Bearer ${userToken}`);
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+        });
+    });
 });

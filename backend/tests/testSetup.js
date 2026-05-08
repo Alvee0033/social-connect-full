@@ -8,6 +8,12 @@ const Sequelize = require('sequelize');
 // Override the DB configuration for testing
 jest.mock('../src/config/db', () => {
     const Sequelize = require('sequelize');
+    // Mock Op.iLike to Op.like for SQLite
+    const Op = Sequelize.Op;
+    if (!Op.iLike) {
+        Op.iLike = Op.like;
+    }
+
     const sequelize = new Sequelize('sqlite::memory:', {
         logging: false,
     });
