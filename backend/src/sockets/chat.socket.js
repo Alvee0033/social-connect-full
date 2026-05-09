@@ -144,9 +144,13 @@ const setupSocketHandlers = (io) => {
             try {
                 const { messageIds, senderId } = data;
                 
+                // Security Fix: Prevent IDOR by ensuring the user marking the message as read is the intended receiver.
                 await Message.update(
                     { isRead: true, readAt: new Date() },
-                    { where: { id: { [Op.in]: messageIds } } }
+                    { where: {
+                        id: { [Op.in]: messageIds },
+                        receiverId: userId
+                    } }
                 );
 
                 // Notify sender that messages were read
