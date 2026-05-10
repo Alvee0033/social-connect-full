@@ -83,4 +83,33 @@ describe('API Security and Functionality Tests', () => {
             expect(remaining2).toBe(remaining1 - 1);
         });
     });
+
+    describe('User Endpoints', () => {
+        const testUser = {
+            display_name: 'searchtestuser',
+            email: 'searchtest@example.com',
+            password: 'password123'
+        };
+        let token;
+
+        beforeAll(async () => {
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+            token = response.body.token;
+        });
+
+        it('should return 401 Unauthorized for unauthenticated search requests', async () => {
+            const response = await request(app).get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+        });
+
+        it('should return 200 OK for authenticated search requests', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=test')
+                .set('Authorization', `Bearer ${token}`);
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+        });
+    });
 });

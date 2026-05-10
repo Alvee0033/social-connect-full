@@ -2,3 +2,8 @@
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
 **Prevention:** Always verify that routes defining state-changing endpoints (POST, PUT, DELETE) have authentication middleware applied. Within controllers, always rely on `req.user.id` (set by the authentication middleware) to determine the user performing the action, rather than relying on the client to send a `userId`.
+
+## 2026-05-10 - [Missing Authentication on User Search Endpoint Leaking PII]
+**Vulnerability:** The `GET /api/users/search` endpoint was missing the `authenticateToken` middleware, allowing unauthenticated attackers to search and extract user PII (display names and emails).
+**Learning:** Even simple search endpoints can leak sensitive PII if left unprotected. By default, Express routes are unprotected unless explicit middleware is used.
+**Prevention:** Always apply the `authenticateToken` middleware to any endpoint that returns user-specific details, relationships, or PII. Review all `router.get` routes to ensure proper authentication is required before exposing potentially sensitive application data.
