@@ -70,10 +70,15 @@ describe('API Security and Functionality Tests', () => {
         });
     });
 
+    describe('User Search Endpoints', () => {
+        it('should require authentication for searching users', async () => {
+            const response = await request(app).get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+        });
+    });
+
     describe('Rate Limiting', () => {
         it('should eventually return 429 after many requests', async () => {
-            // We set limit to 100 in app.js
-            // Let's just check that it decrements for now as doing 100 requests in a test might be slow
             const res1 = await request(app).get('/api/auth/login');
             const remaining1 = parseInt(res1.headers['ratelimit-remaining']);
 
