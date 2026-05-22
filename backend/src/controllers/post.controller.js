@@ -25,8 +25,17 @@ exports.createPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
     try {
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        let limit = Math.max(1, parseInt(req.query.limit) || 50);
+
+        if (limit > 100) limit = 100;
+
+        const offset = (page - 1) * limit;
+
         const posts = await Post.findAll({
             order: [['createdAt', 'DESC']],
+            limit,
+            offset,
             include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
         });
         res.json(posts);
