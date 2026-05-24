@@ -70,6 +70,38 @@ describe('API Security and Functionality Tests', () => {
         });
     });
 
+    describe('User Search Endpoint (Authentication check)', () => {
+        let userToken;
+
+        beforeAll(async () => {
+            // Ensure we have a user and token for testing
+            const testUser = {
+                display_name: 'searchtestuser',
+                email: 'searchtest@example.com',
+                password: 'password123'
+            };
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send(testUser);
+
+            userToken = response.body.token;
+        });
+
+        it('should block unauthenticated access to user search', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+        });
+
+        it('should allow authenticated access to user search', async () => {
+            const response = await request(app)
+                .get('/api/users/search?query=test')
+                .set('Authorization', `Bearer ${userToken}`);
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+        });
+    });
+
     describe('Rate Limiting', () => {
         it('should eventually return 429 after many requests', async () => {
             // We set limit to 100 in app.js
