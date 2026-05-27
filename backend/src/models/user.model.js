@@ -43,6 +43,12 @@ User.beforeCreate(async (user) => {
     }
 });
 
+User.beforeUpdate(async (user) => {
+    if (user.changed('password')) {
+        user.password = await bcrypt.hash(user.password, 10);
+    }
+});
+
 User.prototype.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };

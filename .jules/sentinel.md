@@ -2,3 +2,7 @@
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
 **Prevention:** Always verify that routes defining state-changing endpoints (POST, PUT, DELETE) have authentication middleware applied. Within controllers, always rely on `req.user.id` (set by the authentication middleware) to determine the user performing the action, rather than relying on the client to send a `userId`.
+## 2024-05-24 - [Missing Password Hashing on User Update]
+**Vulnerability:** The User model in Sequelize lacked a `beforeUpdate` hook for password hashing. If an endpoint were created to update a user's password, it would store the password in plaintext, posing a critical security risk.
+**Learning:** Having a `beforeCreate` hook is not enough. Models managing passwords or sensitive credentials must account for both creation and modification events.
+**Prevention:** Always implement both `beforeCreate` and `beforeUpdate` (or equivalent) lifecycle hooks for models that handle password hashing to ensure credentials are never stored in plaintext during updates.
