@@ -1,6 +1,7 @@
 const Message = require('../models/message.model');
 const Conversation = require('../models/conversation.model');
 const User = require('../models/user.model');
+const Friendship = require('../models/friendship.model');
 const { Op } = require('sequelize');
 
 // Send a message
@@ -11,6 +12,22 @@ exports.sendMessage = async (req, res) => {
 
         if (!receiverId || !content) {
             return res.status(400).json({ message: 'Receiver ID and content are required' });
+        }
+
+        // Sentinel Security Fix: Verify authorization via accepted friendship
+        // Prevents sending messages to users who haven't accepted a friend request
+        const friendship = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { requesterId: senderId, addresseeId: receiverId },
+                    { requesterId: receiverId, addresseeId: senderId }
+                ],
+                status: 'accepted'
+            }
+        });
+
+        if (!friendship) {
+            return res.status(403).json({ message: 'You can only message accepted friends' });
         }
 
         // Create message
