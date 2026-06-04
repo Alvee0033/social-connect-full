@@ -29,6 +29,33 @@ describe('API Security and Functionality Tests', () => {
         });
     });
 
+    describe('User Endpoints', () => {
+        it('should block unauthenticated access to user search', async () => {
+            const response = await request(app).get('/api/users/search?query=test');
+            expect(response.status).toBe(401);
+        });
+
+        it('should allow authenticated access to user search', async () => {
+            const testUser = {
+                display_name: 'searchtestuser',
+                email: 'searchtest@example.com',
+                password: 'password123'
+            };
+
+            const resAuth = await request(app).post('/api/auth/register').send(testUser);
+            const token = resAuth.body.token;
+
+            const response = await request(app)
+                .get('/api/users/search?query=searchtest')
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+            expect(response.body.length).toBeGreaterThan(0);
+            expect(response.body[0].email).toBe('searchtest@example.com');
+        });
+    });
+
     describe('Auth Endpoints', () => {
         const testUser = {
             display_name: 'testuser',
