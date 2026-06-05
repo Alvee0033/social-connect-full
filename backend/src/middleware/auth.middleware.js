@@ -1,7 +1,12 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+// SECURE: Do not use hardcoded fallbacks. Fail securely if environment is misconfigured.
+if (!process.env.JWT_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET environment variable is missing.');
+    process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -14,7 +19,8 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     
-    const user = await User.findByPk(decoded.userId);
+    // SECURE: Use decoded.id consistent with auth.service.js sign payload
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -46,7 +52,7 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const user = await User.findByPk(decoded.id);
       if (user) {
         req.user = {
           id: user.id,
