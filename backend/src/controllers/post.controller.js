@@ -14,12 +14,15 @@ exports.createPost = async (req, res) => {
         
         // Fetch the post with user info for proper response
         const postWithUser = await Post.findByPk(post.id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            // Security: Remove 'email' to prevent PII exposure
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         
         res.status(201).json(postWithUser);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        // Security: Don't leak stack traces
+        console.error('createPost error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -27,11 +30,14 @@ exports.getPosts = async (req, res) => {
     try {
         const posts = await Post.findAll({
             order: [['createdAt', 'DESC']],
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            // Security: Remove 'email' to prevent PII exposure
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         res.json(posts);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        // Security: Don't leak stack traces
+        console.error('getPosts error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -39,7 +45,8 @@ exports.reactToPost = async (req, res) => {
     try {
         const { id } = req.params;
         const post = await Post.findByPk(id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            // Security: Remove 'email' to prevent PII exposure
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         if (!post) return res.status(404).json({ message: 'Post not found' });
 
@@ -48,12 +55,15 @@ exports.reactToPost = async (req, res) => {
         
         // Return updated post with user info
         const updatedPost = await Post.findByPk(id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            // Security: Remove 'email' to prevent PII exposure
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         
         res.json(updatedPost);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        // Security: Don't leak stack traces
+        console.error('reactToPost error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
