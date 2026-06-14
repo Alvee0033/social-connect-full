@@ -1,7 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error('CRITICAL: JWT_SECRET environment variable is not set.');
+    throw new Error('Internal Server Configuration Error');
+  }
+  return secret;
+};
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -12,7 +19,8 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(token, secret);
     
     const user = await User.findByPk(decoded.userId);
     if (!user) {
@@ -27,6 +35,9 @@ const authenticateToken = async (req, res, next) => {
     
     next();
   } catch (error) {
+    if (error.message === 'Internal Server Configuration Error') {
+      return res.status(500).json({ message: 'Internal server error' });
+    }
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Token expired' });
     }
@@ -45,7 +56,8 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const secret = getJwtSecret();
+      const decoded = jwt.verify(token, secret);
       const user = await User.findByPk(decoded.userId);
       if (user) {
         req.user = {
@@ -57,6 +69,9 @@ const optionalAuth = async (req, res, next) => {
     }
     next();
   } catch (error) {
+    if (error.message === 'Internal Server Configuration Error') {
+      return res.status(500).json({ message: 'Internal server error' });
+    }
     // Token invalid or expired, continue without user
     next();
   }
