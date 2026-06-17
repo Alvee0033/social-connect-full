@@ -6,18 +6,20 @@ exports.searchUsers = async (req, res) => {
         const { query } = req.query;
         if (!query) return res.json([]);
 
+        const searchOp = process.env.NODE_ENV === 'test' ? Op.like : Op.iLike;
         const users = await User.findAll({
             where: {
                 [Op.or]: [
-                    { display_name: { [Op.iLike]: `%${query}%` } },
-                    { email: { [Op.iLike]: `%${query}%` } }
+                    { display_name: { [searchOp]: `%${query}%` } },
+                    { email: { [searchOp]: `%${query}%` } }
                 ]
             },
-            attributes: ['id', ['display_name', 'displayName'], 'email'],
+            attributes: ['id', ['display_name', 'displayName']],
             limit: 10
         });
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error in searchUsers:', error);
+        res.status(500).json({ message: 'An internal server error occurred while searching for users' });
     }
 };
