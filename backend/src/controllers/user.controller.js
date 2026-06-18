@@ -13,7 +13,7 @@ exports.searchUsers = async (req, res) => {
                     { email: { [Op.iLike]: `%${query}%` } }
                 ]
             },
-            attributes: ['id', ['display_name', 'displayName'], 'email'],
+            attributes: ['id', ['display_name', 'displayName']], // Exclude email to prevent PII leak
             limit: 10
         });
         res.json(users);
