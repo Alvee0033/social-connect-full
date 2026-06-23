@@ -13,8 +13,9 @@ exports.createPost = async (req, res) => {
         const post = await Post.create({ content, imageUrl, userId });
         
         // Fetch the post with user info for proper response
+        // SECURITY: Exclude email to prevent PII exposure
         const postWithUser = await Post.findByPk(post.id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         
         res.status(201).json(postWithUser);
@@ -25,9 +26,10 @@ exports.createPost = async (req, res) => {
 
 exports.getPosts = async (req, res) => {
     try {
+        // SECURITY: Exclude email to prevent PII exposure
         const posts = await Post.findAll({
             order: [['createdAt', 'DESC']],
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         res.json(posts);
     } catch (error) {
@@ -38,8 +40,9 @@ exports.getPosts = async (req, res) => {
 exports.reactToPost = async (req, res) => {
     try {
         const { id } = req.params;
+        // SECURITY: Exclude email to prevent PII exposure
         const post = await Post.findByPk(id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         if (!post) return res.status(404).json({ message: 'Post not found' });
 
@@ -47,8 +50,9 @@ exports.reactToPost = async (req, res) => {
         await post.save();
         
         // Return updated post with user info
+        // SECURITY: Exclude email to prevent PII exposure
         const updatedPost = await Post.findByPk(id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         
         res.json(updatedPost);
