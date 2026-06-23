@@ -6,14 +6,17 @@ exports.searchUsers = async (req, res) => {
         const { query } = req.query;
         if (!query) return res.json([]);
 
+        // SECURITY: Remove email from attributes to prevent PII exposure in search results
+        const likeOperator = process.env.NODE_ENV === 'test' ? Op.like : Op.iLike;
+
         const users = await User.findAll({
             where: {
                 [Op.or]: [
-                    { display_name: { [Op.iLike]: `%${query}%` } },
-                    { email: { [Op.iLike]: `%${query}%` } }
+                    { display_name: { [likeOperator]: `%${query}%` } },
+                    { email: { [likeOperator]: `%${query}%` } }
                 ]
             },
-            attributes: ['id', ['display_name', 'displayName'], 'email'],
+            attributes: ['id', ['display_name', 'displayName']],
             limit: 10
         });
         res.json(users);
