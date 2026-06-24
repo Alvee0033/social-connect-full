@@ -1,10 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
 const authenticateToken = async (req, res, next) => {
   try {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('Critical security error: JWT_SECRET environment variable is missing.');
+      return res.status(500).json({ message: 'Authentication error' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -12,9 +16,9 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
     
-    const user = await User.findByPk(decoded.userId);
+    const user = await User.findByPk(decoded.id || decoded.userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -41,12 +45,22 @@ const authenticateToken = async (req, res, next) => {
 // Optional authentication - doesn't fail if no token, but attaches user if present
 const optionalAuth = async (req, res, next) => {
   try {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('Critical security error: JWT_SECRET environment variable is missing.');
+      // Optional auth should ideally not fail the request if token is missing,
+      // but if the server configuration is broken, it's safer to fail or skip.
+      // Given we are logging it, we can just proceed as unauthenticated for optional,
+      // or error out. Let's error out to be strictly secure on missing config.
+      return res.status(500).json({ message: 'Authentication error' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findByPk(decoded.userId);
+      const decoded = jwt.verify(token, jwtSecret);
+      const user = await User.findByPk(decoded.id || decoded.userId);
       if (user) {
         req.user = {
           id: user.id,
