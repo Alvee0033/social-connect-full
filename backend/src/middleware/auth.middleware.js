@@ -1,10 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
 const authenticateToken = async (req, res, next) => {
   try {
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      console.error('CRITICAL: JWT_SECRET environment variable is not configured.');
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -41,6 +45,12 @@ const authenticateToken = async (req, res, next) => {
 // Optional authentication - doesn't fail if no token, but attaches user if present
 const optionalAuth = async (req, res, next) => {
   try {
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      console.error('CRITICAL: JWT_SECRET environment variable is not configured.');
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
