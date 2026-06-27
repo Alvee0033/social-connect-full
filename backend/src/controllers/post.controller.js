@@ -14,7 +14,7 @@ exports.createPost = async (req, res) => {
         
         // Fetch the post with user info for proper response
         const postWithUser = await Post.findByPk(post.id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         
         res.status(201).json(postWithUser);
@@ -27,7 +27,7 @@ exports.getPosts = async (req, res) => {
     try {
         const posts = await Post.findAll({
             order: [['createdAt', 'DESC']],
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         res.json(posts);
     } catch (error) {
@@ -39,7 +39,7 @@ exports.reactToPost = async (req, res) => {
     try {
         const { id } = req.params;
         const post = await Post.findByPk(id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         if (!post) return res.status(404).json({ message: 'Post not found' });
 
@@ -48,7 +48,7 @@ exports.reactToPost = async (req, res) => {
         
         // Return updated post with user info
         const updatedPost = await Post.findByPk(id, {
-            include: [{ model: User, attributes: ['id', ['display_name', 'displayName'], 'email'] }]
+            include: [{ model: User, attributes: ['id', ['display_name', 'displayName']] }]
         });
         
         res.json(updatedPost);
