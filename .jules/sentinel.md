@@ -1,3 +1,8 @@
+## 2025-02-12 - [Hardcoded JWT Secret Fallback]
+**Vulnerability:** The authentication middleware used a hardcoded fallback string for `JWT_SECRET` (`'your-super-secret-jwt-key-change-in-production'`).
+**Learning:** Hardcoded fallback secrets defeat the purpose of environment variables. If `JWT_SECRET` is missing in production, using a known string allows attackers to sign valid JWT tokens and bypass authentication entirely. Security-critical configurations should fail securely (e.g., throwing an error or logging and returning a 500) rather than using insecure defaults.
+**Prevention:** Remove fallback values for critical secrets. Add explicit checks for environment variables during application startup or within the middleware, and ensure the application or request fails safely if they are missing.
+
 ## 2024-05-24 - [IDOR in Post Creation and Missing Route Authentication]
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
