@@ -1,3 +1,8 @@
+## 2024-07-07 - [Authorization Bypass in Direct Messaging]
+**Vulnerability:** The `sendMessage` controller lacked authorization checks to verify if the sender and receiver had an 'accepted' `Friendship` status. Any user could send direct messages to any other user, bypassing the intended privacy model.
+**Learning:** Checking authorization only at the route level (e.g. `authenticateToken`) only confirms *who* the user is, but not if they have permission to interact with the target resource. Business logic rules (like friendships) must be explicitly enforced in controllers before performing actions.
+**Prevention:** Always validate relationships and permissions between actors (sender and receiver) against business logic requirements (e.g., querying the `Friendship` model) before executing actions like creating messages.
+
 ## 2024-05-24 - [IDOR in Post Creation and Missing Route Authentication]
 **Vulnerability:** The `POST /api/posts` and `POST /api/posts/:id/react` endpoints lacked authentication middleware in the routes definition. Furthermore, the `createPost` controller implicitly trusted `req.body.userId`, allowing any user to potentially create posts masquerading as someone else (IDOR).
 **Learning:** Controller logic alone is insufficient if the middleware protecting it is missing from the route. User-supplied identification data (like `userId` in the body) should never be trusted for actions linked to the authenticated user.
